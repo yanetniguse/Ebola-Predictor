@@ -10,12 +10,10 @@ st.write(
     "Predict the likelihood of patient survival using admission features."
 )
 
-age = st.number_input("Age", min_value=0, max_value=120, value=30)
+age = st.number_input("Age", 0, 120, 30)
 
-sex = st.selectbox(
-    "Sex",
-    ["Male", "Female"]
-)
+sex = st.selectbox("Sex", ["Male", "Female"])
+sex_value = 1 if sex == "Male" else 0
 
 fever = st.selectbox("Fever", [0, 1])
 vomit = st.selectbox("Vomiting/Nausea", [0, 1])
@@ -32,55 +30,96 @@ contact = st.selectbox("Contact History", [0, 1])
 funeral = st.selectbox("Funeral Exposure", [0, 1])
 travel = st.selectbox("Travel History", [0, 1])
 
-sex_value = 1 if sex == "Male" else 2
-
+# -------------------------
+# PREDICTION
+# -------------------------
 if st.button("Predict"):
 
-    patient = pd.DataFrame([[
-        age,
-        sex_value,
-        fever,
-        vomit,
-        diarrhoea,
-        fatigue,
-        abdominal,
-        muscle,
-        joint,
-        headache,
-        breathing,
-        rash,
-        bleeding,
-        contact,
-        funeral,
-        travel
-    ]], columns=[
-        "age",
-        "sex",
-        "fever_ci",
-        "vomit_nausea_ci",
-        "diarrhoea_ci",
-        "fatigue_ci",
-        "abdominal_ci",
-        "muscle_ci",
-        "joint_ci",
-        "headache_ci",
-        "breathing_ci",
-        "rash_ci",
-        "bleeding_ci",
-        "contact_ci",
-        "funeral_ci",
-        "travel_ci"
-    ])
+    patient = pd.DataFrame([{
+        "age": age,
+        "sex": sex_value,
+        "fever_ci": fever,
+        "vomit_nausea_ci": vomit,
+        "diarrhoea_ci": diarrhoea,
+        "fatigue_ci": fatigue,
+        "abdominal_ci": abdominal,
+        "muscle_ci": muscle,
+        "joint_ci": joint,
+        "headache_ci": headache,
+        "breathing_ci": breathing,
+        "rash_ci": rash,
+        "bleeding_ci": bleeding,
+        "contact_ci": contact,
+        "funeral_ci": funeral,
+        "travel_ci": travel
+    }])
 
-    probability = model.predict_proba(patient)[0][1]
+    # Ensure correct feature order
+    patient = patient.reindex(columns=features)
 
-    st.subheader(
-        f"Predicted Survival Probability: {probability:.1%}"
+    # Prediction
+    proba = model.predict_proba(patient)[0]
+    classes = model.classes_
+
+    survival_index = list(classes).index(1) if 1 in classes else 0
+    survival_prob = proba[survival_index]
+
+    # -------------------------
+    # SYMPTOM CHECK
+    # -------------------------
+    symptom_score = (
+        fever + vomit + diarrhoea + fatigue + abdominal +
+        muscle + joint + headache + breathing + rash + bleeding
     )
 
-    if probability > 0.7:
-        st.success("Low Mortality Risk")
-    elif probability > 0.4:
-        st.warning("Moderate Risk")
+    all_zero = symptom_score == 0
+
+    # -------------------------
+    # OUTPUT
+    # -------------------------
+    st.subheader("Prediction Result")
+
+    # CASE 1: ALL ZERO SYMPTOMS
+    if all_zero:
+
+        st.info("No symptoms reported. This reflects baseline model behavior.")
+
+        adjusted_score = (survival_prob - 0.5) * 2
+        adjusted_score = max(0, min(1, adjusted_score))
+
+        st.write(f"Adjusted Baseline Index: {adjusted_score:.2f}")
+
+    # CASE 2: ANY SYMPTOMS PRESENT
     else:
-        st.error("High Mortality Risk")
+
+        st.write(f"Survival Probability: {survival_prob:.1%}")
+
+        if survival_prob >= 0.65:
+            st.success("High Survival Likelihood")
+            st.write("Low predicted risk based on model patterns.")
+
+        elif survival_prob >= 0.45:
+            st.warning("Moderate/Uncertain Outcome")
+            st.write("Model shows mixed indicators; uncertainty is high.")
+
+        else:
+            st.error("High Risk Outcome")
+            st.write("Model indicates elevated risk based on learned patterns.")
+
+        st.progress(float(survival_prob))
+
+    # -------------------------
+    # DISCLAIMER
+    # -------------------------
+    st.caption(
+        "Note: This tool is a statistical learning model and not a medical diagnostic system."
+    )
+
+    # -------------------------
+    # DEBUG (for professor)
+    # -------------------------
+    with st.expander("Model Details (for review)"):
+        st.write("Model classes:", model.classes_)
+        st.write("Feature order:", list(features))
+        st.write("Raw probabilities:", proba)
+        st.write("Symptom score:", symptom_score)
