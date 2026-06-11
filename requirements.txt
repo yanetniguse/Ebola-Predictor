@@ -6,3 +6,7 @@ xgboost
 requests
 scikit-fuzzy
 networkx
+pandas
+joblib
+lightgbm
+matplotlib
