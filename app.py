@@ -93,10 +93,11 @@ if st.button("Predict"):
     # -------------------------
     # SYMPTOM SCORE
     # -------------------------
-    symptom_score = sum([
-        fever, vomit, diarrhoea, fatigue, abdominal,
-        muscle, joint, headache, breathing, rash, bleeding
-    ])
+    symptom_score = (
+    fever + vomit + diarrhoea + fatigue + abdominal +
+    muscle + joint + headache + breathing + rash + bleeding +
+    contact + funeral + travel
+)
 
     all_zero = symptom_score == 0
 
