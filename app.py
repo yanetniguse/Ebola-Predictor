@@ -2,14 +2,17 @@ import streamlit as st
 import pandas as pd
 import joblib
 
+# -------------------------
+# LOAD MODEL
+# -------------------------
 model = joblib.load("Model/ebola_outcome_model.pkl")
 
-st.title("🦠 Ebola Patient Outcome Predictor")
+st.title("Ebola Patient Outcome Predictor")
+st.write("Predicts survival likelihood based on clinical admission features.")
 
-st.write(
-    "Predict the likelihood of patient survival using admission features."
-)
-
+# -------------------------
+# INPUTS
+# -------------------------
 age = st.number_input("Age", 0, 120, 30)
 
 sex = st.selectbox("Sex", ["Male", "Female"])
