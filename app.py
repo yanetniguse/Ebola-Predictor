@@ -7,7 +7,7 @@ import joblib
 # -------------------------
 model = joblib.load("Model/ebola_outcome_model.pkl")
 
-st.title("Ebola Patient Outcome Predictor")
+st.title("🦠 Ebola Patient Outcome Predictor")
 st.write("Predicts survival likelihood based on clinical admission features.")
 
 # -------------------------
