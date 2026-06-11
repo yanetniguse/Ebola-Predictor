@@ -7,6 +7,29 @@ import joblib
 # -------------------------
 model = joblib.load("Model/ebola_outcome_model.pkl")
 
+# Hardcoded feature order (REMOVES ALL FILE ERRORS)
+features = [
+    "age",
+    "sex",
+    "fever_ci",
+    "vomit_nausea_ci",
+    "diarrhoea_ci",
+    "fatigue_ci",
+    "abdominal_ci",
+    "muscle_ci",
+    "joint_ci",
+    "headache_ci",
+    "breathing_ci",
+    "rash_ci",
+    "bleeding_ci",
+    "contact_ci",
+    "funeral_ci",
+    "travel_ci"
+]
+
+# -------------------------
+# APP TITLE
+# -------------------------
 st.title("🦠 Ebola Patient Outcome Predictor")
 st.write("Predicts survival likelihood based on clinical admission features.")
 
@@ -60,7 +83,7 @@ if st.button("Predict"):
     # Ensure correct feature order
     patient = patient.reindex(columns=features)
 
-    # Prediction
+    # Model prediction
     proba = model.predict_proba(patient)[0]
     classes = model.classes_
 
@@ -68,12 +91,12 @@ if st.button("Predict"):
     survival_prob = proba[survival_index]
 
     # -------------------------
-    # SYMPTOM CHECK
+    # SYMPTOM SCORE
     # -------------------------
-    symptom_score = (
-        fever + vomit + diarrhoea + fatigue + abdominal +
-        muscle + joint + headache + breathing + rash + bleeding
-    )
+    symptom_score = sum([
+        fever, vomit, diarrhoea, fatigue, abdominal,
+        muscle, joint, headache, breathing, rash, bleeding
+    ])
 
     all_zero = symptom_score == 0
 
@@ -82,32 +105,31 @@ if st.button("Predict"):
     # -------------------------
     st.subheader("Prediction Result")
 
-    # CASE 1: ALL ZERO SYMPTOMS
+    # CASE 1: ALL SYMPTOMS = 0
     if all_zero:
-
-        st.info("No symptoms reported. This reflects baseline model behavior.")
+        st.info("No symptoms reported. Prediction reflects baseline dataset behavior.")
+        st.write("No survival probability displayed (baseline case).")
 
         adjusted_score = (survival_prob - 0.5) * 2
         adjusted_score = max(0, min(1, adjusted_score))
 
-        st.write(f"Adjusted Baseline Index: {adjusted_score:.2f}")
+        st.write(f"Baseline Index (interpreted): {adjusted_score:.2f}")
 
     # CASE 2: ANY SYMPTOMS PRESENT
     else:
-
         st.write(f"Survival Probability: {survival_prob:.1%}")
 
         if survival_prob >= 0.65:
             st.success("High Survival Likelihood")
-            st.write("Low predicted risk based on model patterns.")
+            st.write("Model indicates low risk based on learned patterns.")
 
         elif survival_prob >= 0.45:
-            st.warning("Moderate/Uncertain Outcome")
-            st.write("Model shows mixed indicators; uncertainty is high.")
+            st.warning("Moderate / Uncertain Outcome")
+            st.write("Model shows mixed indicators; uncertainty is present.")
 
         else:
             st.error("High Risk Outcome")
-            st.write("Model indicates elevated risk based on learned patterns.")
+            st.write("Model indicates elevated risk based on symptom pattern.")
 
         st.progress(float(survival_prob))
 
@@ -119,10 +141,10 @@ if st.button("Predict"):
     )
 
     # -------------------------
-    # DEBUG (for professor)
+    # DEBUG (PROFESSOR VIEW)
     # -------------------------
     with st.expander("Model Details (for review)"):
         st.write("Model classes:", model.classes_)
-        st.write("Feature order:", list(features))
+        st.write("Feature order:", features)
         st.write("Raw probabilities:", proba)
         st.write("Symptom score:", symptom_score)
