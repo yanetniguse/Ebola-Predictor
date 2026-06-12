@@ -118,7 +118,7 @@ if st.button("Predict"):
 
     # CASE 2: ANY SYMPTOMS PRESENT
     else:
-        st.write(f"Survival Probability: {survival_prob:.1%}")
+        st.write(f"Ebola Probability: {survival_prob:.1%}")
 
         if survival_prob >= 0.65:
             st.success("High Survival Likelihood")
